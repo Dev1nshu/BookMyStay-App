@@ -1,125 +1,163 @@
 import java.util.*;
 
-/**
- * Project: Book My Stay
- * Use Case 7: Add-On Service Selection
- * Goal: Map multiple services to a reservation using Map<String, List<Service>>.
- * * @author YourName
- * @version 1.0
- */
-
-// --- Entity: Service (New for Use Case 7) ---
-class AddOnService {
-    private String name;
-    private double price;
-
-    public AddOnService(String name, double price) {
-        this.name = name;
-        this.price = price;
-    }
-
-    public String getName() { return name; }
-    public double getPrice() { return price; }
-
-    @Override
-    public String toString() {
-        return name + " ($" + price + ")";
-    }
-}
-
-// --- Entity: Room (From Use Case 2/4/6) ---
-class Room {
-    private int roomNumber;
-    private String category;
-    private boolean isAvailable;
-
-    public Room(int roomNumber, String category) {
-        this.roomNumber = roomNumber;
-        this.category = category;
-        this.isAvailable = true;
-    }
-
-    public int getRoomNumber() { return roomNumber; }
-    public boolean isAvailable() { return isAvailable; }
-    public void setAvailable(boolean available) { isAvailable = available; }
-
-    @Override
-    public String toString() {
-        return "Room [" + roomNumber + " | " + category + " | Available: " + isAvailable + "]";
-    }
-}
-
-// --- Entity: Reservation (From Use Case 5/6) ---
-class ReservationRequest {
+// Reservation Class (Represents a confirmed booking)
+class Reservation {
+    private String reservationId;
     private String guestName;
-    private int requestedRoomNumber;
+    private String roomType;
+    private double baseCost;
 
-    public ReservationRequest(String guestName, int requestedRoomNumber) {
+    public Reservation(String reservationId, String guestName, String roomType, double baseCost) {
+        this.reservationId = reservationId;
         this.guestName = guestName;
-        this.requestedRoomNumber = requestedRoomNumber;
+        this.roomType = roomType;
+        this.baseCost = baseCost;
     }
 
-    public String getGuestName() { return guestName; }
-    public int getRequestedRoomNumber() { return requestedRoomNumber; }
+    public String getReservationId() {
+        return reservationId;
+    }
+
+    public String getGuestName() {
+        return guestName;
+    }
+
+    public String getRoomType() {
+        return roomType;
+    }
+
+    public double getBaseCost() {
+        return baseCost;
+    }
+
+    @Override
+    public String toString() {
+        return "Reservation ID: " + reservationId +
+                ", Guest: " + guestName +
+                ", Room: " + roomType +
+                ", Cost: ₹" + baseCost;
+    }
 }
 
+// Booking History (Stores confirmed bookings)
+class BookingHistory {
+    private List<Reservation> reservations;
+
+    public BookingHistory() {
+        reservations = new ArrayList<>();
+    }
+
+    // Add confirmed booking
+    public void addReservation(Reservation reservation) {
+        reservations.add(reservation);
+        System.out.println("Reservation stored in history: " + reservation.getReservationId());
+    }
+
+    // Get all reservations
+    public List<Reservation> getAllReservations() {
+        return reservations;
+    }
+}
+
+// Booking Report Service (Generates reports)
+class BookingReportService {
+
+    // Display all bookings
+    public void displayAllBookings(List<Reservation> reservations) {
+        if (reservations.isEmpty()) {
+            System.out.println("No bookings found.");
+            return;
+        }
+
+        System.out.println("\n--- Booking History ---");
+        for (Reservation r : reservations) {
+            System.out.println(r);
+        }
+    }
+
+    // Generate summary report
+    public void generateSummaryReport(List<Reservation> reservations) {
+        System.out.println("\n--- Booking Summary Report ---");
+
+        int totalBookings = reservations.size();
+        double totalRevenue = 0;
+
+        Map<String, Integer> roomTypeCount = new HashMap<>();
+
+        for (Reservation r : reservations) {
+            totalRevenue += r.getBaseCost();
+
+            roomTypeCount.put(
+                    r.getRoomType(),
+                    roomTypeCount.getOrDefault(r.getRoomType(), 0) + 1
+            );
+        }
+
+        System.out.println("Total Bookings: " + totalBookings);
+        System.out.println("Total Revenue: ₹" + totalRevenue);
+
+        System.out.println("\nRoom Type Distribution:");
+        for (String type : roomTypeCount.keySet()) {
+            System.out.println(type + ": " + roomTypeCount.get(type));
+        }
+    }
+}
+
+// Main Class
 public class Main {
 
     public static void main(String[] args) {
 
-        // --- Setup Inventory & Requests ---
-        List<Room> inventory = new ArrayList<>();
-        inventory.add(new Room(101, "Standard"));
-        inventory.add(new Room(102, "Deluxe"));
+        Scanner scanner = new Scanner(System.in);
+        BookingHistory history = new BookingHistory();
+        BookingReportService reportService = new BookingReportService();
 
-        Queue<ReservationRequest> bookingQueue = new LinkedList<>();
-        bookingQueue.add(new ReservationRequest("Alice", 101));
-        bookingQueue.add(new ReservationRequest("Bob", 102));
+        while (true) {
+            System.out.println("\n--- Booking System Menu ---");
+            System.out.println("1. Confirm Booking");
+            System.out.println("2. View Booking History");
+            System.out.println("3. Generate Report");
+            System.out.println("4. Exit");
 
-        // --- Use Case 6: Allocation (Summary) ---
-        Set<Integer> allocatedRooms = new HashSet<>();
-        System.out.println("=== Use Case 6: Allocation Summary ===");
-        while (!bookingQueue.isEmpty()) {
-            ReservationRequest req = bookingQueue.poll();
-            allocatedRooms.add(req.getRequestedRoomNumber());
-            System.out.println("Confirmed: " + req.getGuestName() + " in Room " + req.getRequestedRoomNumber());
-        }
+            System.out.print("Enter choice: ");
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // consume newline
 
-        // --- Use Case 7: Add-On Service Selection ---
+            switch (choice) {
 
-        // 1. Define Available Services
-        AddOnService breakfast = new AddOnService("Breakfast Buffet", 20.0);
-        AddOnService wifi = new AddOnService("High-Speed WiFi", 10.0);
-        AddOnService spa = new AddOnService("Spa Treatment", 50.0);
+                case 1:
+                    System.out.print("Enter Reservation ID: ");
+                    String id = scanner.nextLine();
 
-        // 2. Map Reservation (Guest Name) to a List of Services
-        Map<String, List<AddOnService>> serviceAssignments = new HashMap<>();
+                    System.out.print("Enter Guest Name: ");
+                    String name = scanner.nextLine();
 
-        System.out.println("\n--- Use Case 7: Adding Services ---");
+                    System.out.print("Enter Room Type (Single/Double): ");
+                    String room = scanner.nextLine();
 
-        // Guest: Alice selects Breakfast and WiFi
-        serviceAssignments.put("Alice", new ArrayList<>());
-        serviceAssignments.get("Alice").add(breakfast);
-        serviceAssignments.get("Alice").add(wifi);
+                    System.out.print("Enter Cost: ");
+                    double cost = scanner.nextDouble();
 
-        // Guest: Bob selects Spa
-        serviceAssignments.put("Bob", new ArrayList<>());
-        serviceAssignments.get("Bob").add(spa);
+                    Reservation reservation = new Reservation(id, name, room, cost);
+                    history.addReservation(reservation);
+                    break;
 
-        // 3. Cost Aggregation Logic
-        for (String guest : serviceAssignments.keySet()) {
-            double totalAddOnCost = 0;
-            System.out.println("\nAdd-Ons for " + guest + ":");
+                case 2:
+                    reportService.displayAllBookings(history.getAllReservations());
+                    break;
 
-            List<AddOnService> guestServices = serviceAssignments.get(guest);
-            for (AddOnService s : guestServices) {
-                System.out.println(" + " + s);
-                totalAddOnCost += s.getPrice();
+                case 3:
+                    reportService.generateSummaryReport(history.getAllReservations());
+                    break;
+
+                case 4:
+                    System.out.println("Exiting...");
+                    scanner.close();
+                    return;
+
+                default:
+                    System.out.println("Invalid choice!");
             }
-            System.out.println("Total Service Charges: $" + totalAddOnCost);
         }
-
-        System.out.println("\n--- Final System Integrity Check ---");
-        System.out.println("Core Inventory preserved? Yes. Total Rooms: " + inventory.size());
     }
 }
